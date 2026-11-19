@@ -1,5 +1,11 @@
+// Core App & Base Classes. Using it to use the runApp(). StatelessWidget, StatefulWidget, which BaggageApp, Mainpage, CalculatorScreen. AboutScreen extend.
+// Screen & Navigation Structure: MaterialApp, Scaffold, AppBar and Drawer. About pages.
+// Themes, Colors & Icons: ThemeData, ColorScheme, Colors (Colors.indigo) and flutter built-in Icons.
 import 'package:flutter/material.dart';
+// Url build in package.
 import 'package:url_launcher/url_launcher.dart';
+// flutter pub add material_symbols_icons to use the Symbols.weight.
+import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
   runApp(const BaggageApp());
@@ -17,8 +23,8 @@ class BaggageApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
-          primary: Colors.indigo,
+          seedColor: Colors.blueAccent,
+          primary: Colors.blueAccent,
           secondary: Colors.amber,
         ),
       ),
@@ -116,21 +122,37 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   String _selectedClass = 'Economy';
 
   // Output variable
+  // ? right after variable like double? Cannot be empty allow to empthy. It allow the number to hold variable number or null (No value).
   double? _excessWeight;
   double? _excessCharge;
   double? _totalPayable;
   String _errorMessage = '';
 
   void _calculateFee() {
+    // Tells Flutter that the numbers on the screen are about to change, so it should refresh the user interface to show the new results or error messages.
     setState(() {
       _errorMessage = '';
 
       // Validation (Rubric #5)
+      // .trim() removes any accidental spaces before or after the number.
+      // double.tryParse safely converts that text into a decimal number (double), If the box is emptry or contains lettters, it returns null instead of crashing the app.
       final double? weight = double.tryParse(_weightController.text.trim());
       final double? rate = double.tryParse(_ratedController.text.trim());
 
+      // Check if the weight is less than 0.
+      // If invalid it will show _errorMessage
       if (weight == null || weight <= 0) {
         _errorMessage = 'Please enter a valid baggage weight (> 0 kg).';
+        // Clear out old outputs. Before this so that it will not get back the old outputs.
+        _resetOutputs();
+        // Using the return; to stop the calculation early.
+        return;
+      }
+
+      // Weight limit check
+      if (weight > 100) {
+        _errorMessage =
+            'Baggage weight cannot exceed the maximum limit of 100 kg.';
         _resetOutputs();
         return;
       }
@@ -142,15 +164,23 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       }
 
       // Calculation Rules (Rubric #1): Economy = 20kg, Business = 40kg
+      // Finding the Free Wight Limit.
+      // Short for if-else statement. If _selectedClass is 'Economy', the free allowance (X) is 20.0 kg
+      // Otherwise 'Business', free allowance (x) is 40.0 kg.
       final double allowance = (_selectedClass == 'Economy') ? 20.0 : 40.0;
 
       // Excess weight cannot be negative (max of 0 or difference)
+      // First it subtract the free weight (wight - allowance)
+      // Checks if difference > 0.
+      // IF the bag lighter than or equal to the limit, it sets _excessWight to 0.0 so the excess weight is never negative.
       final double difference = weight - allowance;
       _excessWeight = difference > 0 ? difference : 0.0;
 
+      // Multiplies the _excessWeight by the rate per kg. ( The ! tells Dart the _excessWight is not null becuase it will be assigned)
       // Excess baggage charge
       _excessCharge = _excessWeight! * rate;
 
+      //Calculate 8% service tax 8% and adds it to _excessCharge to get final amount.
       // Total payable = Charge + 8% SST
       _totalPayable = _excessCharge! + (_excessCharge! * 0.08);
     });
@@ -204,7 +234,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             decoration: const InputDecoration(
               labelText: 'Baggage Weight (kg)',
               hintText: 'e.g 25.0',
-              prefixIcon: Icon(Icons.scale),
+              prefixIcon: Icon(Symbols.weight),
               border: OutlineInputBorder(),
             ),
           ),
